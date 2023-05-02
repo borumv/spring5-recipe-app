@@ -70,6 +70,7 @@ public class RecipeServiceImplTest {
         //should go boom
     }
 
+
     @Test
     public void getRecipeCommandByIdTest() throws Exception {
         Recipe recipe = new Recipe();
