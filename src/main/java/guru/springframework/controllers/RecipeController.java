@@ -7,8 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+
+import javax.validation.Valid;
 
 /**
  * Created by jt on 6/19/17.
@@ -18,6 +21,8 @@ import org.springframework.web.servlet.ModelAndView;
 public class RecipeController {
 
     private final RecipeService recipeService;
+
+    private static final String RECIPE_RECIPEFORM_URL = "recipe/recipeform";
 
     public RecipeController(RecipeService recipeService) {
         this.recipeService = recipeService;
@@ -41,13 +46,18 @@ public class RecipeController {
     @GetMapping("recipe/{id}/update")
     public String updateRecipe(@PathVariable String id, Model model){
         model.addAttribute("recipe", recipeService.findCommandById(Long.valueOf(id)));
-        return  "recipe/recipeform";
+        return  RECIPE_RECIPEFORM_URL;
     }
 
     @PostMapping("recipe")
-    public String saveOrUpdate(@ModelAttribute RecipeCommand command){
+    public String saveOrUpdate(@Valid @ModelAttribute ("recipe") RecipeCommand command, BindingResult bindingResult){
+        if(bindingResult.hasErrors()){
+            bindingResult.getAllErrors().forEach(item ->{
+                log.debug(item.toString());
+            });
+            return RECIPE_RECIPEFORM_URL;
+        }
         RecipeCommand savedCommand = recipeService.saveRecipeCommand(command);
-
         return "redirect:/recipe/" + savedCommand.getId() + "/show";
     }
 
@@ -71,12 +81,5 @@ public class RecipeController {
         return modelAndView;
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(NumberFormatException.class)
-    public ModelAndView handleBadRequest(Exception exception){
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.setViewName("400Error");
-        modelAndView.addObject("exception", exception);
-        return modelAndView;
-    }
+
 }

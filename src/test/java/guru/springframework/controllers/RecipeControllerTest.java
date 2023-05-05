@@ -36,7 +36,9 @@ public class RecipeControllerTest {
         MockitoAnnotations.initMocks(this);
 
         controller = new RecipeController(recipeService);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ControllerExceptionHandler())
+                .build();
     }
 
     @Test
@@ -92,9 +94,13 @@ public class RecipeControllerTest {
 
         mockMvc.perform(post("/recipe")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("id", "")
-                .param("description", "some string")
-        )
+                        .param("id", "")
+                        .param("prepTime", "2")
+                        .param("cookTime", "2")
+                        .param("servings", "3")
+                        .param("url", "http://www.simplyrecipes.com/recipes/perfect_guacamole/#ixzz4jvoun5ws")
+                        .param("description", "")
+                        .param("directions", "some string"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name("redirect:/recipe/2/show"));
     }
@@ -107,6 +113,23 @@ public class RecipeControllerTest {
         when(recipeService.findCommandById(anyLong())).thenReturn(command);
 
         mockMvc.perform(get("/recipe/1/update"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("recipe/recipeform"))
+                .andExpect(model().attributeExists("recipe"));
+    }
+
+    @Test
+    public void testValidationErrorWhenWeProvideIncorrectDescription() throws Exception {
+        RecipeCommand command = new RecipeCommand();
+        command.setId(2L);
+        command.setDescription("");
+        command.setId(2L);
+        command.setId(2L);
+        command.setId(2L);
+
+        when(recipeService.findCommandById(anyLong())).thenReturn(command);
+
+        mockMvc.perform(post("/recipe"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("recipe/recipeform"))
                 .andExpect(model().attributeExists("recipe"));
